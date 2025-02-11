@@ -26,22 +26,21 @@ void UC_SkillMGR::BeginPlay()
 		DestroyComponent();
 		return;
 	}
-	for (uint8 i = (uint8)FE_SkillID::E_NONE; i < (uint8)FE_SkillID::E_EnumMAX; i++)
-	{
-		m_arIndex[i].Reset(5);
-		m_arIndex[i].Init(0, 5);
-	}
-	/*m_arIndex[1][0] = 0; 
+	m_arIndex[0].Init(0, 1);
+	m_arIndex[1].Init(0, 4);
+	m_arIndex[1][0] = 0; 
 	m_arIndex[1][1] = 1; 
 	m_arIndex[1][2] = 2; 
 	m_arIndex[1][3] = 3; 
+	m_arIndex[2].Init(0, 4);
 	m_arIndex[2][0] = 0;
 	m_arIndex[2][1] = 1;
 	m_arIndex[2][2] = 4;
 	m_arIndex[2][3] = 5;
+	m_arIndex[3].Init(0, 3);
 	m_arIndex[3][0] = 0;
 	m_arIndex[3][1] = 1;
-	m_arIndex[3][2] = 6;*/
+	m_arIndex[3][2] = 6;
 	if (m_pDataTable)
 	{
 		TArray< FS_SkillData*> arData{};
@@ -87,7 +86,7 @@ bool UC_SkillMGR::E_PlayNextMontage()
 {
 	FE_MontageID eMontageID = m_arSkillData[m_sSrc.nSkillIndex]->eMontageID;
 	UC_MontageMGR* pMontageMGR = m_pOwner->E_GetMontageMGR();
-	if (!pMontageMGR || m_sSrc.nIndex == 0)
+	if (!pMontageMGR)
 		return false;
 	pMontageMGR->E_SetMontageData(eMontageID, m_sSrc.nPlayIndex);
 	pMontageMGR->E_PlayMontage();
