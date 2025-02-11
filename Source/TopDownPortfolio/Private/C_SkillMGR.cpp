@@ -32,11 +32,10 @@ void UC_SkillMGR::BeginPlay()
 	m_arIndex[1][1] = 1; 
 	m_arIndex[1][2] = 2; 
 	m_arIndex[1][3] = 3; 
-	m_arIndex[2].Init(0, 4);
+	m_arIndex[2].Init(0, 3);
 	m_arIndex[2][0] = 0;
 	m_arIndex[2][1] = 1;
-	m_arIndex[2][2] = 4;
-	m_arIndex[2][3] = 5;
+	m_arIndex[2][2] = 5;
 	m_arIndex[3].Init(0, 3);
 	m_arIndex[3][0] = 0;
 	m_arIndex[3][1] = 1;
