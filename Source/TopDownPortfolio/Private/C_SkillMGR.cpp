@@ -1,0 +1,99 @@
+#include "C_SkillMGR.h"
+#include "A_Character_Base.h"
+#include "S_Skill.h"
+#include "D_DataTable.h"
+#include "C_MontageMGR.h"
+#include "C_StatusMGR.h"
+#include "E_State.h"
+
+UC_SkillMGR::UC_SkillMGR() :
+	UActorComponent{}, m_pOwner{}, m_pDataTable{}, m_arSkillData{}, m_arIndex{}, m_sSrc{}
+{
+	PrimaryComponentTick.bCanEverTick  = false;
+	//D_DataTable cData{};
+	//m_pDataTable = cData.E_Default_Skiil();
+	
+	
+}
+
+
+void UC_SkillMGR::BeginPlay()
+{
+	UActorComponent::BeginPlay();
+	m_pOwner = Cast<AA_Character_Base> (GetOwner());
+	if (!m_pOwner)
+	{
+		DestroyComponent();
+		return;
+	}
+	for (uint8 i = (uint8)FE_SkillID::E_NONE; i < (uint8)FE_SkillID::E_EnumMAX; i++)
+	{
+		m_arIndex[i].Reset(5);
+		m_arIndex[i].Init(0, 5);
+	}
+	/*m_arIndex[1][0] = 0; 
+	m_arIndex[1][1] = 1; 
+	m_arIndex[1][2] = 2; 
+	m_arIndex[1][3] = 3; 
+	m_arIndex[2][0] = 0;
+	m_arIndex[2][1] = 1;
+	m_arIndex[2][2] = 4;
+	m_arIndex[2][3] = 5;
+	m_arIndex[3][0] = 0;
+	m_arIndex[3][1] = 1;
+	m_arIndex[3][2] = 6;*/
+	if (m_pDataTable)
+	{
+		TArray< FS_SkillData*> arData{};
+		m_pDataTable->GetAllRows< FS_SkillData>("", arData);
+		m_arSkillData.Init(nullptr, (uint8)FE_SkillID::E_EnumMAX + 1);
+		for (FS_SkillData*& pData : arData)
+		{
+			m_arSkillData[(uint8)pData->eSkillID] = pData;
+		}
+	}
+}
+
+bool UC_SkillMGR::E_Action(FE_SkillID eID)
+{
+	S_CurrentData sDst{};
+	sDst.eSkillID = eID;
+	sDst.nSkillIndex = (uint8)sDst.eSkillID;
+	if (!m_arSkillData[sDst.nSkillIndex])
+		return false;
+	FE_MontageID eMontageID = m_arSkillData[sDst.nSkillIndex]->eMontageID;
+	FE_StatusID eStatusID = FE_StatusID::E_MP;
+	float fStatus = -m_arSkillData[sDst.nSkillIndex]->fConsumMP;
+	UC_MontageMGR* pMontageMGR = m_pOwner->E_GetMontageMGR();
+	UC_StatusMGR* pStatusMGR= m_pOwner->E_GetStatusMGR();
+
+	if (m_sSrc.eSkillID == sDst.eSkillID)
+	{
+		sDst.nPlayIndex = m_sSrc.nPlayIndex;
+		sDst.nIndex = m_sSrc.nIndex;
+	}
+	bool bResult = pMontageMGR->E_CheckPlayable(eMontageID, sDst.nPlayIndex);
+	if (bResult && pStatusMGR->E_CheckAdd(eStatusID, fStatus))
+	{
+		E_Copy(m_sSrc, sDst);
+		m_pOwner->E_SubState(FE_StateType::E_IsTravel);
+		pStatusMGR->E_AddStatus_Current(eStatusID, fStatus);
+		E_PlayNextMontage();
+	}
+	return bResult;
+}
+
+bool UC_SkillMGR::E_PlayNextMontage()
+{
+	FE_MontageID eMontageID = m_arSkillData[m_sSrc.nSkillIndex]->eMontageID;
+	UC_MontageMGR* pMontageMGR = m_pOwner->E_GetMontageMGR();
+	if (!pMontageMGR || m_sSrc.nIndex == 0)
+		return false;
+	pMontageMGR->E_SetMontageData(eMontageID, m_sSrc.nPlayIndex);
+	pMontageMGR->E_PlayMontage();
+	m_sSrc.nIndex++;
+	if (m_sSrc.nIndex >= m_arIndex[m_sSrc.nSkillIndex].Num())
+		m_sSrc.nIndex = 0;
+	m_sSrc.nPlayIndex = m_arIndex[m_sSrc.nSkillIndex][m_sSrc.nIndex];
+	return true;
+}
